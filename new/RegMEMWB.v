@@ -57,9 +57,9 @@ reg RegWrite;
 reg MemToReg;
 
 // CP0 write data
-reg CP0WE,
-reg[4:0] CP0WAddr,
-reg[31:0] CP0WData,
+reg CP0WE;
+reg[4:0] CP0WAddr;
+reg[31:0] CP0WData;
 
 assign MemReadDataOutput=MemReadData;
 assign EXResultOutput=EXResult;

@@ -72,6 +72,7 @@ always@(*)begin
 					{ExResultSelect,RegWrite,MemRead,MemWrite,BranchType[1:0],JumpType[1:0],RegSrcA[5:0],RegSrcB[5:0],RegDest[5:0],ALUSrc,MemToReg,MemReadSelect,MemWriteSelect,IsMOVZ,ALUOp[3:0]}=
 					{2'b0,1'b0,1'b0,1'b0,2'b0,2'b0, 1'b0,Instruction[20:16], 1'b0,Instruction[20:16], 1'b0,Instruction[15:11],1'b0,1'b0,2'b0,1'b0,1'b0,4'b0};
 				end
+			endcase
 		end
 		6'b0:begin
 			case (Instruction[5:0])

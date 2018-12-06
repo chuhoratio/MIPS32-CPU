@@ -24,7 +24,7 @@ module CP0(
     // cause[6:2]: ExcCode: indicates the kind of exception
     // 00000: Int Interruption
     // 01000: Sys Syscall
-	output reg[31:0] epc,		// epc
+	output reg[31:0] epc		// epc
 );
 
 // write CP0
@@ -43,8 +43,8 @@ always @(posedge clk) begin
 		// if write enable
 		if(we == 1'b1) begin
 			case(waddr)
-				// count
-				5'b01001: begin
+				// ebase
+				5'b01111: begin
 					ebase <= wdata;
 				end
 				// status:
@@ -73,8 +73,8 @@ always @(*) begin
 	end
 	else begin
 		case(raddr)
-			// count
-			5'b01001: begin
+			// ebase
+			5'b01111: begin
 				data <= ebase;
 			end
 			// status:

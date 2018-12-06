@@ -101,23 +101,23 @@ reg RegWrite;
 reg MemToReg;
 
 // CP0 write data
-reg CP0WE,
-reg[4:0] CP0WAddr,
-reg[31:0] CP0WData,
+reg CP0WE;
+reg[4:0] CP0WAddr;
+reg[31:0] CP0WData;
 
 // Exc Type
-reg ExcSyscall,
-reg ExcEret,
-reg ExcDs,
+reg ExcSyscall;
+reg ExcEret;
+reg ExcDs;
 
 // CP0 Registers
-reg[31:0] Ebase,
-reg[31:0] Status,
-reg[31:0] Cause,
-reg[31:0] Epc,
+reg[31:0] Ebase;
+reg[31:0] Status;
+reg[31:0] Cause;
+reg[31:0] Epc;
 
 // PC
-reg PC,
+reg PC;
 
 assign EXResultOutput=EXResult;
 assign RegDestOutput=RegDest;
@@ -141,7 +141,7 @@ assign CP0WDataOutput = CP0WData;
 // Exc Type
 assign ExcSyscallOutput = ExcSyscall;
 assign ExcEretOutput = ExcEret;
-assign IsDSOutput = IsDS;
+assign ExcDsOutput = ExcDs;
 
 // CP0 Registers
 assign EbaseOutput = Ebase;
@@ -176,7 +176,7 @@ always@(posedge clk or posedge rst) begin
         // Exc Type
         ExcSyscall <= 0;
         ExcEret <= 0;
-        IsDS <= 0;
+        ExcDs <= 0;
         // CP0 Registers
         Ebase <= 0;
         Status <= 0;
@@ -208,7 +208,7 @@ always@(posedge clk or posedge rst) begin
             // Exc Type
             ExcSyscall <= 0;
             ExcEret <= 0;
-            IsDS <= 0;
+            ExcDs <= 0;
             // CP0 Registers
             Ebase <= 0;
             Status <= 0;

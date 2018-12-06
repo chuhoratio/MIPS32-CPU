@@ -153,7 +153,7 @@ Extender Extender_c(
 );
 
 
-//TODO:Controller
+//Controller
 wire[1:0] IDEXResultSelect;
 wire IDRegWrite;
 wire IDMemRead;
@@ -204,12 +204,10 @@ Controller Controller_c(
 
 wire[31:0] CP0Data;
 
-wire[31:0] cpcount;
-wire[31:0] cpcompare;
+wire[31:0] cpebase;
 wire[31:0] cpstatus;
 wire[31:0] cpcause;
 wire[31:0] cpepc;
-wire cptimeset;
 
 //CP0
 CP0 CP0_C(
@@ -225,8 +223,7 @@ CP0 CP0_C(
     // outputs
     .data(CP0Data),      // Data Read
     // five registers
-    .count(cpcount),     // clock counter 
-    .compare(cpcompare),   // has a set number to compare with clock counter 
+    .ebase(cpebase),
     .status(cpstatus),
     // status[28]: CP0 useable or not; 1 = cp0 can be used
     // status[15:8]: block syscall or not; 1 means handle syscall
@@ -241,8 +238,7 @@ CP0 CP0_C(
     //  10: RI Undetermined Exception
     //  12: Overflow
     //  13: Trap: if something traps it selt
-    .epc(cpepc),       // epc
-    .timeset(cptimeset)         // if a time-set syscall happens
+    .epc(cpepc)       // epc
 );
 
 //TODO:RegisterFile
@@ -692,6 +688,14 @@ assign LED= //(SW==0) ? IDALUOp:
             (SW==37) ? EXMEMEXResult[15:0]:
             (SW==38) ? EXMEMEXResult[31:0]:
             */
+            (SW==64) ? cpebase[15:0]:
+            (SW==65) ? cpebase[31:16]:
+            (SW==66) ? cpstatus[15:0]:
+            (SW==67) ? cpstatus[31:16]:
+            (SW==68) ? cpcause[15:0]:
+            (SW==69) ? cpcause[31:16]:
+            (SW==70) ? cpepc[15:0]:
+            (SW==71) ? cpepc[31:16]:
             0;
 
 endmodule

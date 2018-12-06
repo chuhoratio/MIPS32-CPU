@@ -8,7 +8,7 @@ module EXCP0Forward (
 	input wire[4:0] MEMWAddr,
 	input wire[4:0] WBWAddr,
 
-	output wire[31:0] OutputData
+	output reg[31:0] OutputData
 );
 
 always @(*) begin

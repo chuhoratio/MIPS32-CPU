@@ -10,7 +10,7 @@ module Ctrl(
 	input wire ExcDelay,
 
 	// CP0 Contents
-	input wire[31:0] CP0EPC,
+	input wire[31:0] CP0EBASE,
 	input wire[31:0] CP0STATUS,
 	input wire[31:0] CP0CAUSE,
 	input wire[31:0] CP0EPC,
@@ -28,16 +28,11 @@ module Ctrl(
 	output reg MEWBFlush
 );
 
+wire[31:0] pc;
+
 // data preparation
 // delayslot or not
-always @ (*) begin
-	if (ExcDelay) begin
-		CurrentPC = CurrentPC - 4;
-	end
-	else begin
-		CurrentPC = CurrentPC;
-	end
-end
+assign pc = ExcDelay ? CurrentPC - 4:CurrentPC;
 
 // five registers
 // ebase,

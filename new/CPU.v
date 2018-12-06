@@ -174,7 +174,9 @@ wire CP0WE;
 wire[4:0] CP0WAddr;
 wire CP0RE;
 wire[4:0] CP0RAddr;
+// Exc Type
 wire ExcSyscall;
+wire ExcEret;
 
 Controller Controller_c(
     .Instruction(IFIDInstruction),
@@ -199,7 +201,8 @@ Controller Controller_c(
     .CP0RE(CP0RE),
     .CP0RAddr(CP0RAddr),
 
-    .ExcSyscall(ExcSyscall)
+    .ExcSyscall(ExcSyscall),
+    .ExcEret(ExcEret)
 );
 
 wire[31:0] CP0Data;
@@ -286,7 +289,16 @@ wire[4:0] EXCP0RAddr;
 wire EXCP0WE;
 wire[4:0] EXCP0WAddr;
 wire[31:0] EXCP0WData;
+// Exc Types
 wire EXSyscall;
+wire ExEret;
+wire ExDelay;
+
+// CP0 CONTENTS
+wire[31:0] exstatus;
+wire[31:0] excause;
+wire[31:0] exebase;
+wire[31:0] exepc;
 
 RegIDEX RegIDEX_c(
     .clk(clk),
@@ -309,8 +321,24 @@ RegIDEX RegIDEX_c(
     
     // Exp Type
     .ExcSyscallInput(ExcSyscall),
+    .ExcEretInput(ExcEret),
     .ExcSyscallOutput(EXSyscall),
+    .ExcEretOutput(ExEret),
 
+    // DelaySlot
+    .BranchDS(IDEXBranchType),
+    .JumpDS(IDEXJumpType),
+    .IsDSOutput(ExDelay),
+
+    // CP0 Contents
+    .EbaseInput(cpebase),
+    .EpcInput(cpepc),
+    .StatusInput(cpstatus),
+    .CauseInput(cpcause),
+    .EbaseOutput(exebase),
+    .EpcOutput(excause),
+    .StatusOutput(exstatus),
+    .CauseOutput(excause),
 
     .NPCInput(IFIDNPC),
         
@@ -432,14 +460,33 @@ ALU ALU_c(
 
 
 wire[31:0] EXCP0FData;
+wire[31:0] fnstatus;
+wire[31:0] fncause;
+wire[31:0] fnepc;
+wire[31:0] fnebase;
 // CP0 Selector
 EXCP0Forward EXCP0ForwardUnit(
+    // Used for MFC0
     .ERead(EXCP0RData),
     .MWrite(MEMCP0WData),
     .WWrite(WBCP0WData),
     .RAddr(EXCP0RAddr),
     .MEMWAddr(MEMCP0WAddr),
     .WBWAddr(WBCP0WAddr),
+
+    // Write Enables
+    .MEMWE(MEMCP0WE),
+    .WBWE(WBCP0WE),
+    // Used for pushing forward CP0 contents
+    // ebase, epc, status, cause
+    .EbaseInput(exebase),
+    .EpcInput(exepc),
+    .StatusInput(exstatus),
+    .CauseInput(excause),
+    .EbaseOutput(fnebase),
+    .EpcOutput(fnepc),
+    .StatusOutput(fnstatus),
+    .CauseOutput(fncause),
 
     .OutputData(EXCP0FData)
 );
@@ -517,6 +564,15 @@ wire[4:0] MEMCP0WAddr;
 wire[31:0] MEMCP0WData;
 // EXC WIRES
 wire MEMSyscall;
+wire MEMEret;
+wire MEMDelay;
+// PC
+wire[31:0] MEMPC;
+// CP0 Registers
+wire[31:0] memstatus;
+wire[31:0] memcause;
+wire[31:0] memepc;
+wire[31:0] memebase;
 
 RegEXMEM RegEXMEM_c(
     .clk(clk),
@@ -535,10 +591,28 @@ RegEXMEM RegEXMEM_c(
     // Exc Type
     .ExcSyscallInput(EXSyscall),
     .ExcSyscallOutput(MEMSyscall),
+    .ExcEretInput(ExEret),
+    .ExcEretOutput(MEMEret),
+    .ExcDsInput(ExDelay),
+    .ExcDsOutput(MEMDelay),
 
     .EXResultInput(EXEXResult),
     .RegDestInput(IDEXRegDest),
     .RegDataBInput(EXRegB),
+
+    // Current PC
+    .PCInput(IDEXNPC - 4),
+    .PCOutput(MEMPC),
+
+    // CP0 Contents
+    .EbaseInput(fnebase),
+    .EpcInput(fnepc),
+    .StatusInput(fnstatus),
+    .CauseInput(fncause),
+    .EbaseOutput(memebase),
+    .EpcOutput(memcause),
+    .StatusOutput(memstatus),
+    .CauseOutput(memcause),
     
     .MemReadInput(IDEXMemRead),
     .MemWriteInput(IDEXMemWrite),
@@ -565,6 +639,30 @@ RegEXMEM RegEXMEM_c(
     .MemToRegOutput(EXMEMMemToReg)
 );
 
+Ctrl Ctrl_CP0(
+    .rst(rst),
+    .CurrentPC(MEMPC),
+
+    // Exc Types
+    .ExcSyscall(MEMSyscall),
+    .ExcEret(MEMEret),
+    .ExcDelay(MEMDelay),
+
+    // CP0 Contents
+    .CP0EBASE(memebase),
+    .CP0STATUS(memstatus),
+    .CP0CAUSE(memcause),
+    .CP0EPC(memepc),
+
+    // Exception PC
+    .ExcPC(),
+    // flush   
+    .PCFlush(),
+    .IFIDFlush(),
+    .IDEXFlush(),
+    .EXMEFlush(),
+    .MEWBFlush()
+);
 
 assign MemAddress=EXMEMEXResult;
 assign MemWriteData=EXMEMRegDataB;

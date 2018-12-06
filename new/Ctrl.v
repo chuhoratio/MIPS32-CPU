@@ -30,7 +30,6 @@ module Ctrl(
 
 wire[31:0] pc;
 
-// data preparation
 // delayslot or not
 assign pc = ExcDelay ? CurrentPC - 4:CurrentPC;
 

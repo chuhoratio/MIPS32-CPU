@@ -56,6 +56,11 @@ reg[5:0] RegDest;
 reg RegWrite;
 reg MemToReg;
 
+// CP0 write data
+reg CP0WE,
+reg[4:0] CP0WAddr,
+reg[31:0] CP0WData,
+
 assign MemReadDataOutput=MemReadData;
 assign EXResultOutput=EXResult;
 assign RegDestOutput=RegDest;
@@ -64,9 +69,9 @@ assign RegWriteOutput=RegWrite;
 assign MemToRegOutput=MemToReg;
 
 // CP0: WRITE
-assign CP0WEOutput = CP0WEInput;
-assign CP0WAddrOutput = CP0WAddrInput;
-assign CP0WDataOutput = CP0WDataInput;
+assign CP0WEOutput = CP0WE;
+assign CP0WAddrOutput = CP0WAddr;
+assign CP0WDataOutput = CP0WData;
 
 always@(posedge clk or posedge rst) begin
     if (rst) begin
@@ -77,6 +82,11 @@ always@(posedge clk or posedge rst) begin
         
         RegWrite<=0;
         MemToReg<=0;
+
+        // CP0: WRITE
+        CP0WE <= 0;
+        CP0WAddr <= 0;
+        CP0WData <= 0;
     end else begin
         if (clr) begin
 
@@ -86,6 +96,11 @@ always@(posedge clk or posedge rst) begin
             
             RegWrite<=0;
             MemToReg<=0;
+
+            // CP0: WRITE
+            CP0WE <= 0;
+            CP0WAddr <= 0;
+            CP0WData <= 0;
         end else if (writeEN) begin
 
             MemReadData<=MemReadDataInput;
@@ -94,6 +109,11 @@ always@(posedge clk or posedge rst) begin
             
             RegWrite<=RegWriteInput;
             MemToReg<=MemToRegInput;
+
+            // CP0: WRITE
+            CP0WE <= CP0WEInput;
+            CP0WAddr <= CP0WDataInput;
+            CP0WData <= CP0WDataInput;
         end
     end
 end

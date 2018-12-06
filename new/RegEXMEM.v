@@ -37,6 +37,25 @@ module RegEXMEM(
     // Exc Type
     input wire ExcSyscallInput,
     output wire ExcSyscallOutput,
+    input wire ExcEretInput,
+    output wire ExcEretOutput,
+    input wire ExcDsInput,
+    output wire ExcDsOutput,
+
+    // CP0 Registers
+    input wire[31:0] EbaseInput,
+    input wire[31:0] StatusInput,
+    input wire[31:0] CauseInput,
+    input wire[31:0] EpcInput,
+    output wire[31:0] EbaseOutput,
+    output wire[31:0] StatusOutput,
+    output wire[31:0] CauseOutput,
+    output wire[31:0] EpcOutput,
+
+    // PC
+    input wire[31:0] PCInput,
+    output wire[31:0] PCOutput,
+
 
     input wire[31:0] EXResultInput,
     input wire[5:0] RegDestInput,
@@ -81,6 +100,25 @@ reg MemWriteSelect;
 reg RegWrite;
 reg MemToReg;
 
+// CP0 write data
+reg CP0WE,
+reg[4:0] CP0WAddr,
+reg[31:0] CP0WData,
+
+// Exc Type
+reg ExcSyscall,
+reg ExcEret,
+reg ExcDs,
+
+// CP0 Registers
+reg[31:0] Ebase,
+reg[31:0] Status,
+reg[31:0] Cause,
+reg[31:0] Epc,
+
+// PC
+reg PC,
+
 assign EXResultOutput=EXResult;
 assign RegDestOutput=RegDest;
 assign RegDataBOutput=RegDataB;
@@ -96,12 +134,23 @@ assign RegWriteOutput=RegWrite;
 assign MemToRegOutput=MemToReg;
 
 // CP0: WRITE
-assign CP0WEOutput = CP0WEInput;
-assign CP0WAddrOutput = CP0WAddrInput;
-assign CP0WDataOutput = CP0WDataInput;
+assign CP0WEOutput = CP0WE;
+assign CP0WAddrOutput = CP0WAddr;
+assign CP0WDataOutput = CP0WData;
 
 // Exc Type
-assign ExcSyscallOutput = ExcSyscallInput;
+assign ExcSyscallOutput = ExcSyscall;
+assign ExcEretOutput = ExcEret;
+assign IsDSOutput = IsDS;
+
+// CP0 Registers
+assign EbaseOutput = Ebase;
+assign StatusOutput = Status;
+assign CauseOutput = Cause;
+assign EpcOutput = Epc;
+
+// PC
+assign PCOutput = PC;
 
 always@(posedge clk or posedge rst) begin
     if (rst) begin
@@ -119,6 +168,22 @@ always@(posedge clk or posedge rst) begin
         
         RegWrite<=0;
         MemToReg<=0;
+
+        // CP0: WRITE
+        CP0WE <= 0;
+        CP0WAddr <= 0;
+        CP0WData <= 0;
+        // Exc Type
+        ExcSyscall <= 0;
+        ExcEret <= 0;
+        IsDS <= 0;
+        // CP0 Registers
+        Ebase <= 0;
+        Status <= 0;
+        Cause <= 0;
+        Epc <= 0;
+        // PC
+        PC <= 0;
     end else begin
         if (clr) begin
 
@@ -135,6 +200,22 @@ always@(posedge clk or posedge rst) begin
             
             RegWrite<=0;
             MemToReg<=0;
+
+            // CP0: WRITE
+            CP0WE <= 0;
+            CP0WAddr <= 0;
+            CP0WData <= 0;
+            // Exc Type
+            ExcSyscall <= 0;
+            ExcEret <= 0;
+            IsDS <= 0;
+            // CP0 Registers
+            Ebase <= 0;
+            Status <= 0;
+            Cause <= 0;
+            Epc <= 0;
+            // PC
+            PC <= 0;
         end else if (writeEN) begin
 
             EXResult<=EXResultInput;
@@ -150,6 +231,22 @@ always@(posedge clk or posedge rst) begin
             
             RegWrite<=RegWriteInput;
             MemToReg<=MemToRegInput;
+
+            // CP0: WRITE
+            CP0WE <= CP0WEInput;
+            CP0WAddr <= CP0WDataInput;
+            CP0WData <= CP0WDataInput;
+            // Exc Type
+            ExcSyscall <= ExcSyscallInput;
+            ExcEret <= ExcEretInput;
+            ExcDs <= ExcDsInput;
+            // CP0 Registers
+            Ebase <= EbaseInput;
+            Status <= StatusInput;
+            Cause <= CauseInput;
+            Epc <= EpcInput;
+            // PC
+            PC <= PCInput;
         end
     end
 end

@@ -42,6 +42,22 @@ module RegIDEX(
     // Exc Type
     input wire ExcSyscallInput,
     output wire ExcSyscallOutput,
+    input wire ExcEretInput,
+    output wire ExcEretOutput,
+    // Delay Slot
+    input wire[1:0] BranchDS,
+    input wire[1:0] JumpDS,
+    output wire IsDSOutput,
+
+    // CP0 Registers
+    input wire[31:0] EbaseInput,
+    input wire[31:0] StatusInput,
+    input wire[31:0] CauseInput,
+    input wire[31:0] EpcInput,
+    output wire[31:0] EbaseOutput,
+    output wire[31:0] StatusOutput,
+    output wire[31:0] CauseOutput,
+    output wire[31:0] EpcOutput,
 
     input wire[31:0] NPCInput,
     
@@ -69,7 +85,7 @@ module RegIDEX(
     input wire MemToRegInput,
     
     input wire IsMOVZInput,
-    
+
     output wire[31:0] NPCOutput,
         
     output wire[5:0] RegSrcAOutput,
@@ -125,6 +141,23 @@ reg MemToReg;
 
 reg IsMOVZ;
 
+// CP0: READ
+reg[31:0] CP0Data;
+reg[4:0] CP0RAddr;
+// CP0: WRITE
+reg CP0WE;
+reg[4:0] CP0WAddr;
+reg[31:0] CP0WData;
+// Exc Type
+reg ExcSyscall;
+reg ExcEret;
+reg IsDS;
+// CP0 Registers
+reg[31:0] Ebase;
+reg[31:0] Status;
+reg[31:0] Cause;
+reg[31:0] Epc;
+
 assign NPCOutput=NPC;
 
 assign RegSrcAOutput=RegSrcA;
@@ -153,15 +186,23 @@ assign MemToRegOutput=MemToReg;
 assign IsMOVZOutput=IsMOVZ;
 
 // CP0: READ
-assign CP0DataOutput = CP0DataInput;
-assign CP0RAddrOutput = CP0RAddrInput;
+assign CP0DataOutput = CP0Data;
+assign CP0RAddrOutput = CP0RAddr;
 // CP0: WRITE
-assign CP0WEOutput = CP0WEInput;
-assign CP0WAddrOutput = CP0WAddrInput;
-assign CP0WDataOutput = CP0WDataInput;
+assign CP0WEOutput = CP0WE;
+assign CP0WAddrOutput = CP0WAddr;
+assign CP0WDataOutput = CP0WData;
 
 // Exc Type
-assign ExcSyscallOutput = ExcSyscallInput;
+assign ExcSyscallOutput = ExcSyscall;
+assign ExcEretOutput = ExcEret;
+assign IsDSOutput = IsDS;
+
+// CP0 Registers
+assign EbaseOutput = Ebase;
+assign StatusOutput = Status;
+assign CauseOutput = Cause;
+assign EpcOutput = Epc;
 
 always@(posedge clk or posedge rst) begin
     if (rst) begin
@@ -191,7 +232,25 @@ always@(posedge clk or posedge rst) begin
         MemToReg<=0;
         
         IsMOVZ<=0;
-    end else begin
+        IsDS <= 0;
+
+        // CP0 Data
+        CP0Data <= 0;
+        CP0RAddr <= 0;
+        // CP0: WRITE
+        CP0WE <= 0;
+        CP0WAddr <= 0;
+        CP0WData <= 0;
+        // Exc Type
+        ExcSyscall <= 0;
+        ExcEret <= 0;
+        // CP0 Registers
+        Ebase <= 0;
+        Status <= 0;
+        Cause <= 0;
+        Epc <= 0;
+    end 
+    else begin
         if (clr) begin
             NPC<=0;
             
@@ -219,7 +278,26 @@ always@(posedge clk or posedge rst) begin
             MemToReg<=0;
             
             IsMOVZ<=0;
-        end else if (writeEN) begin
+            
+
+            // CP0 Data
+            CP0Data <= 0;
+            CP0RAddr <= 0;
+            // CP0: WRITE
+            CP0WE <= 0;
+            CP0WAddr <= 0;
+            CP0WData <= 0;
+            // Exc Type
+            ExcSyscall <= 0;
+            ExcEret <= 0;
+            IsDS <= 0;
+            // CP0 Registers
+            Ebase <= 0;
+            Status <= 0;
+            Cause <= 0;
+            Epc <= 0;
+        end 
+        else if (writeEN) begin
             NPC<=NPCInput;
             
             RegSrcA<=RegSrcAInput;
@@ -246,6 +324,29 @@ always@(posedge clk or posedge rst) begin
             MemToReg<=MemToRegInput;
             
             IsMOVZ<=IsMOVZInput;
+
+            // CP0 Data
+            CP0Data <= CP0DataInput;
+            CP0RAddr <= CP0RAddrInput;
+            // CP0: WRITE
+            CP0WE <= CP0WEInput;
+            CP0WAddr <= CP0WDataInput;
+            CP0WData <= CP0WDataInput;
+            // Exc Type
+            ExcSyscall <= ExcSyscallInput;
+            ExcEret <= ExcEretInput;
+            // CP0 Registers
+            Ebase <= EbaseInput;
+            Status <= StatusInput;
+            Cause <= CauseInput;
+            Epc <= EpcInput;
+            // Delay Slot
+            if (BranchDS == 2'b00 && JumpDS == 2'b00) begin
+                IsDS <= 0;
+            end
+            else begin
+                IsDS <= 1;
+            end
         end
     end
 end

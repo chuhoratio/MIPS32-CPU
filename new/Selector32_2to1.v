@@ -19,11 +19,16 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-
 module Selector32_2to1(
-    input wire InputA,
-    input wire InputB,
-    input wire Control,
-    output wire Output
+	input wire[31:0]InputA,
+	input wire[31:0]InputB,
+	input wire Control,
+	output reg[31:0]Output
     );
+always @(*) begin
+	case (Control)
+		0:Output<=InputA;
+		1:Output<=InputB;
+	endcase
+end
 endmodule

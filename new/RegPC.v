@@ -42,10 +42,10 @@ always@(posedge clk or posedge rst) begin
     end else begin
         if (clr) begin
             if(PCControl) begin
-                PCOutput <= ExceptionPC;
+                PC <= ExceptionPC;
             end
             else begin
-                PCOutput <= 0;
+                PC <= 0;
             end
         end else if (writeEN) begin
             PC <= PCInput;

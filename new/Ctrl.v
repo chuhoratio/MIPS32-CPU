@@ -4,6 +4,18 @@ module Ctrl(
 	input wire rst,
 	input wire[31:0] CurrentPC,
 
+	// Stall Control
+	input wire PCWriteEN,
+    input wire PCClear,
+    input wire IFIDWriteEN,
+    input wire IFIDClear,
+    input wire IDEXWriteEN,
+    input wire IDEXClear,
+    input wire EXMEMWriteEN,
+    input wire EXMEMClear,
+    input wire MEMWBWriteEN,
+    input wire MEMWBClear,
+
 	// Exc Types
 	input wire ExcSyscall,
 	input wire ExcEret,
@@ -15,9 +27,6 @@ module Ctrl(
 	input wire[31:0] CP0CAUSE,
 	input wire[31:0] CP0EPC,
 
-	input wire stallreq_from_id,
-	input wire stallreq_from_ex,
-
 	// Exception PC
 	output reg[31:0] ExcPC,
 	// output reg flush,	
@@ -25,7 +34,13 @@ module Ctrl(
 	output reg IFIDFlush,
 	output reg IDEXFlush,
 	output reg EXMEFlush,
-	output reg MEWBFlush
+	output reg MEWBFlush,
+	// output reg we
+	output reg PCWE,
+	output reg IFIDWE,
+	output reg IDEXWE,
+	output reg EXMEWE,
+	output reg MEWBWE
 );
 
 wire[31:0] pc;
@@ -33,12 +48,24 @@ wire[31:0] pc;
 // delayslot or not
 assign pc = ExcDelay ? CurrentPC - 4:CurrentPC;
 
+// stall control
+assign PCFlush = PCClear;
+assign IFIDFlush = IFIDClear;
+assign IDEXFlush = IDEXClear;
+assign EXMEFlush = EXMEMClear;
+assign MEWBFlush = MEMWBClear;
+assign PCWE = PCWriteEN;
+assign IFIDWE = IFIDWriteEN;
+assign IDEXWE = IDEXWriteEN;
+assign EXMEWE = EXMEMWriteEN;
+assign MEWBWE = MEMWBWriteEN;
+
 // five registers
 // ebase,
 
 // status,
-// status[12]: IM4 - 1 for not masking syscall
-// status[1]: Exception level. 1 = shows if exception happens
+// status[12]: IM4 : 1 = not masking syscall
+// status[1]: Exception level. 1 = exception happens
 // status[0]: interrupt enable. 1 = enables syscall
 
 // cause
@@ -60,6 +87,7 @@ always @ (*) begin
 		ExcPC <= 32'b0;
 	end
 	else begin
+		CP0CAUSE[31] <= ExcDelay;
 		// Interrupt 4
 		if (CP0STATUS[12] == 1 && CP0CAUSE[12] == 1 && CP0STATUS[1:0] == 2'b01) begin
 			// you can interrupt

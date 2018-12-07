@@ -104,8 +104,8 @@ wire PCwriteEN;
 RegPC RegPC_c(
     .clk(clk),
     .rst(rst),
-    .clr(PCclr),
-    .writeEN(PCwriteEN),
+    .clr(PCFlush),
+    .writeEN(PCWE),
     
     .PCInput(NewPC),
     
@@ -133,8 +133,8 @@ wire IFIDwriteEN;
 RegIFID RegIFID_c(
     .clk(clk),
     .rst(rst),
-    .clr(IFIDclr),
-    .writeEN(IFIDwriteEN),
+    .clr(IFIDFlush),
+    .writeEN(IFIDWE),
     
     .NPCInput(IFNPC),
     .InstructionInput(InstInput),
@@ -303,8 +303,8 @@ wire[31:0] exepc;
 RegIDEX RegIDEX_c(
     .clk(clk),
     .rst(rst),
-    .clr(IDEXclr),
-    .writeEN(IDEXwriteEN),
+    .clr(IDEXFlush),
+    .writeEN(IDEXWE),
 
     // CP0Data: read
     .CP0DataInput(CP0Data),
@@ -577,8 +577,8 @@ wire[31:0] memebase;
 RegEXMEM RegEXMEM_c(
     .clk(clk),
     .rst(rst),
-    .clr(EXMEMclr),
-    .writeEN(EXMEMwriteEN),
+    .clr(EXMEFlush),
+    .writeEN(EXMEWE),
     
     // CP0 write data
     .CP0WEInput(EXCP0WE),
@@ -639,9 +639,33 @@ RegEXMEM RegEXMEM_c(
     .MemToRegOutput(EXMEMMemToReg)
 );
 
+wire[31:0] ExcPC;
+wire PCFlush;
+wire IFIDFlush;
+wire IDEXFlush;
+wire EXMEFlush;
+wire MEWBFlush;
+wire PCWE;
+wire IFIDWE;
+wire IDEXWE;
+wire EXMEWE;
+wire MEWBWE;
+
 Ctrl Ctrl_CP0(
     .rst(rst),
     .CurrentPC(MEMPC),
+
+    // Handle all the stalls
+    .PCWriteEN(PCwriteEN),
+    .PCClear(PCclr),
+    .IFIDWriteEN(IFIDwriteEN),
+    .IFIDClear(IFIDclr),
+    .IDEXWriteEN(IDEXwriteEN),
+    .IDEXClear(IDEXclr),
+    .EXMEMWriteEN(EXMEMwriteEN),
+    .EXMEMClear(EXMEMclr),
+    .MEMWBWriteEN(MEMWBwriteEN),
+    .MEMWBClear(MEMWBclr),
 
     // Exc Types
     .ExcSyscall(MEMSyscall),
@@ -655,13 +679,19 @@ Ctrl Ctrl_CP0(
     .CP0EPC(memepc),
 
     // Exception PC
-    .ExcPC(),
+    .ExcPC(ExcPC),
     // flush   
-    .PCFlush(),
-    .IFIDFlush(),
-    .IDEXFlush(),
-    .EXMEFlush(),
-    .MEWBFlush()
+    .PCFlush(PCFlush),
+    .IFIDFlush(IFIDFlush),
+    .IDEXFlush(IDEXFlush),
+    .EXMEFlush(EXMEFlush),
+    .MEWBFlush(MEWBFlush),
+    // we
+    .PCWE(PCWE),
+    .IFIDWE(IFIDWE),
+    .IDEXWE(IDEXWE),
+    .EXMEWE(EXMEWE),
+    .MEWBWE(MEWBWE)
 );
 
 assign MemAddress=EXMEMEXResult;
@@ -687,8 +717,8 @@ wire[31:0] WBCP0WData;
 RegMEMWB RegMEMWB_c(
     .clk(clk),
     .rst(rst),
-    .clr(MEMWBclr),
-    .writeEN(MEMWBwriteEN),
+    .clr(MEWBFlush),
+    .writeEN(MEWBWE),
     
     // CP0 write data
     .CP0WEInput(MEMCP0WE),

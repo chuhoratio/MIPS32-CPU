@@ -10,6 +10,11 @@ module CP0(
 	input wire[5:0] waddr,		// Addr to write
 	input wire[31:0] wdata,		// Data to write
 
+	// 
+	input wire[2:0] type,
+	input wire CP0WE,
+	input wire[31:0] excaddr,
+
 	// outputs
 	output reg[31:0] data,		// Data Read
 	// five registers
@@ -59,6 +64,30 @@ always @(posedge clk) begin
 				// epc:
 				5'b01110: begin
 					epc <= wdata;
+				end
+			endcase
+		end
+
+		// if exception happens
+		if (CP0WE == 1) begin
+			case(type)
+				//eret
+				3'b010: begin
+					status[1] = 0;
+				end
+				//syscall in delayslot
+				3'b101: begin
+					epc = excaddr;
+					cause[31] = 1;
+					status[1] = 1;
+					cause[6:2] = 5'b01000;
+				end
+				//syscall not in delayslot
+				3'b100: begin
+					epc = excaddr;
+					cause[31] = 0;
+					status[1] = 1;
+					cause[6:2] = 5'b01000;
 				end
 			endcase
 		end

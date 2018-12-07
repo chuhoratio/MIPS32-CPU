@@ -25,7 +25,9 @@ module RegPC(
     input wire rst,
     input wire clr,
     input wire writeEN,
-   
+
+    input wire PCControl,
+    input wire[31:0] ExceptionPC,
     input wire[31:0] PCInput,
     output wire[31:0] PCOutput
     );
@@ -39,7 +41,12 @@ always@(posedge clk or posedge rst) begin
         PC <= 0;
     end else begin
         if (clr) begin
-            PC <= 0;
+            if(PCControl) begin
+                PCOutput <= ExceptionPC;
+            end
+            else begin
+                PCOutput <= 0;
+            end
         end else if (writeEN) begin
             PC <= PCInput;
         end

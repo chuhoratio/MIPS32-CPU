@@ -29,6 +29,8 @@ module Ctrl(
 
 	// Exception PC
 	output reg[31:0] ExcPC,
+	// generate new pc
+	output reg[31:0] FinalPC,
 	// output reg flush,	
 	output reg PCFlush,
 	output reg IFIDFlush,
@@ -40,25 +42,21 @@ module Ctrl(
 	output reg IFIDWE,
 	output reg IDEXWE,
 	output reg EXMEWE,
-	output reg MEWBWE
+	output reg MEWBWE,
+
+	output reg CP0WE,
+	output reg[2:0] ExcepType
 );
 
 wire[31:0] pc;
+// in this module, we decide whether to change cp0:
+// if an exception already happens, neglect everything
+// else, pass the exception information to cp0
 
 // delayslot or not
 assign pc = ExcDelay ? CurrentPC - 4:CurrentPC;
 
-// stall control
-assign PCFlush = PCClear;
-assign IFIDFlush = IFIDClear;
-assign IDEXFlush = IDEXClear;
-assign EXMEFlush = EXMEMClear;
-assign MEWBFlush = MEMWBClear;
-assign PCWE = PCWriteEN;
-assign IFIDWE = IFIDWriteEN;
-assign IDEXWE = IDEXWriteEN;
-assign EXMEWE = EXMEMWriteEN;
-assign MEWBWE = MEMWBWriteEN;
+
 
 // five registers
 // ebase,
@@ -84,22 +82,47 @@ always @ (*) begin
 		IDEXFlush <= 1;
 		EXMEFlush <= 1;
 		MEWBFlush <= 1;
+		PCWE <= 1;
+        IFIDWE <= 1;
+        IDEXWE <= 1;
+        EXMEWE <= 1;
+        MEWBWE <= 1;
 		ExcPC <= 32'b0;
 	end
 	else begin
-		CP0CAUSE[31] <= ExcDelay;
-		// Interrupt 4
-		if (CP0STATUS[12] == 1 && CP0CAUSE[12] == 1 && CP0STATUS[1:0] == 2'b01) begin
-			// you can interrupt
-		end
-		// Syscall
-		else if (ExcSyscall == 1) begin
-			// you can syscall
-		end
-		// Eret
-		else if (ExcEret == 1) begin
-			// you can eret
-		end
+        // stall control
+        PCFlush = PCClear;
+        IFIDFlush = IFIDClear;
+        IDEXFlush = IDEXClear;
+        EXMEFlush = EXMEMClear;
+        MEWBFlush = MEMWBClear;
+        PCWE = PCWriteEN;
+        IFIDWE = IFIDWriteEN;
+        IDEXWE = IDEXWriteEN;
+        EXMEWE = EXMEMWriteEN;
+        MEWBWE = MEMWBWriteEN;
+        CP0WE = 0;
+        // where inst is wrong
+        ExcPC = pc;
+        // discover an interrupt
+        if (ExcSyscall == 1 || ExcEret == 1) begin
+        	// handle it
+        	if(CP0STATUS[1] == 0) begin
+        		CP0WE = 1;
+        		ExcepType = {ExcSyscall, ExcEret, ExcDelay};
+        		PCFlush = 1;
+		        IFIDFlush = 1;
+		        IDEXFlush = 1;
+		        EXMEFlush = 1;
+		        MEWBFlush = 1;
+		        if (ExcEret == 1) begin
+		        	FinalPC = CP0EPC;
+		        end
+		        else begin
+		        	FinalPC = CP0EBASE;
+		        end
+        	end
+        end
 	end
 end
 

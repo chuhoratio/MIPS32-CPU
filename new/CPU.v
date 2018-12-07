@@ -107,6 +107,8 @@ RegPC RegPC_c(
     .clr(PCFlush),
     .writeEN(PCWE),
     
+    .PCControl(ExceptionHappen),
+    .ExceptionPC(FinalPC),
     .PCInput(NewPC),
     
     .PCOutput(PC)
@@ -222,6 +224,10 @@ CP0 CP0_C(
     .we(WBCP0WE),             // write enable
     .waddr(WBCP0WAddr),          // Addr to write
     .wdata(WBCP0WData),          // Data to write
+
+    .type(ExceptionType),
+    .CP0WE(ExceptionHappen),
+    .excaddr(ExcPC),
 
     // outputs
     .data(CP0Data),      // Data Read
@@ -651,6 +657,10 @@ wire IDEXWE;
 wire EXMEWE;
 wire MEWBWE;
 
+wire ExceptionHappen;
+wire[2:0] ExceptionType;
+wire[31:0] FinalPC;
+
 Ctrl Ctrl_CP0(
     .rst(rst),
     .CurrentPC(MEMPC),
@@ -680,6 +690,8 @@ Ctrl Ctrl_CP0(
 
     // Exception PC
     .ExcPC(ExcPC),
+    // final pc
+    .FinalPC(FinalPC),
     // flush   
     .PCFlush(PCFlush),
     .IFIDFlush(IFIDFlush),
@@ -691,7 +703,10 @@ Ctrl Ctrl_CP0(
     .IFIDWE(IFIDWE),
     .IDEXWE(IDEXWE),
     .EXMEWE(EXMEWE),
-    .MEWBWE(MEWBWE)
+    .MEWBWE(MEWBWE),
+
+    .CP0WE(ExceptionHappen),
+    .ExcepType(ExceptionType)
 );
 
 assign MemAddress=EXMEMEXResult;
